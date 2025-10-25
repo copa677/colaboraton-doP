@@ -18,8 +18,8 @@ def login(request):
     password = serializer.validated_data['password']
     
     try:
-        # Buscar usuario por username
-        usuario = Usuario.objects.get(username=username)
+        # Buscar usuario por username (solo activos)
+        usuario = Usuario.objects.get(username=username, estado=True)
         
         # Verificar contraseña
         if not usuario.check_password(password):
@@ -49,16 +49,25 @@ def login(request):
         )
 
 
-# GET /api/usuarios/ - Listar todos los usuarios (PROTEGIDA)
+# GET /api/usuarios/ - Listar usuarios activos (PROTEGIDA)
 @api_view(['GET'])
 @jwt_required
 def listar_usuarios(request):
+    usuarios = Usuario.objects.filter(estado=True)
+    serializer = UsuarioSerializer(usuarios, many=True)
+    return Response(serializer.data)
+
+
+# GET /api/usuarios/todos/ - Listar todos los usuarios (PROTEGIDA)
+@api_view(['GET'])
+@jwt_required
+def listar_todos_usuarios(request):
     usuarios = Usuario.objects.all()
     serializer = UsuarioSerializer(usuarios, many=True)
     return Response(serializer.data)
 
 
-# POST /api/usuarios/ - Crear un usuario (PÚBLICA)
+# POST /api/usuarios/crear/ - Crear un usuario (PÚBLICA)
 @api_view(['POST'])
 def crear_usuario(request):
     serializer = UsuarioSerializer(data=request.data)
@@ -73,36 +82,70 @@ def crear_usuario(request):
 @jwt_required
 def obtener_usuario(request, pk):
     try:
-        usuario = Usuario.objects.get(pk=pk)
+        usuario = Usuario.objects.get(pk=pk, estado=True)
         serializer = UsuarioSerializer(usuario)
         return Response(serializer.data)
     except Usuario.DoesNotExist:
-        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {'error': 'Usuario no encontrado o inactivo'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
 
 
-# PUT /api/usuarios/{id}/ - Editar un usuario (PROTEGIDA)
+# PUT /api/usuarios/{id}/editar/ - Editar un usuario (PROTEGIDA)
 @api_view(['PUT'])
 @jwt_required
 def editar_usuario(request, pk):
     try:
-        usuario = Usuario.objects.get(pk=pk)
+        usuario = Usuario.objects.get(pk=pk, estado=True)
     except Usuario.DoesNotExist:
-        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {'error': 'Usuario no encontrado o inactivo'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
     
-    serializer = UsuarioSerializer(usuario, data=request.data)
+    serializer = UsuarioSerializer(usuario, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# DELETE /api/usuarios/{id}/ - Eliminar un usuario (PROTEGIDA)
+# DELETE /api/usuarios/{id}/eliminar/ - Eliminar usuario (PROTEGIDA) - Eliminación lógica
 @api_view(['DELETE'])
 @jwt_required
 def eliminar_usuario(request, pk):
     try:
-        usuario = Usuario.objects.get(pk=pk)
-        usuario.delete()
-        return Response({'message': 'Usuario eliminado correctamente'}, status=status.HTTP_204_NO_CONTENT)
+        usuario = Usuario.objects.get(pk=pk, estado=True)
+        usuario.delete()  # Eliminación lógica
+        return Response(
+            {'message': 'Usuario eliminado correctamente (eliminación lógica)'}, 
+            status=status.HTTP_200_OK
+        )
     except Usuario.DoesNotExist:
-        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {'error': 'Usuario no encontrado o ya está inactivo'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+
+# POST /api/usuarios/{id}/restaurar/ - Restaurar usuario (PROTEGIDA)
+@api_view(['POST'])
+@jwt_required
+def restaurar_usuario(request, pk):
+    try:
+        usuario = Usuario.objects.get(pk=pk, estado=False)
+        usuario.restaurar()
+        serializer = UsuarioSerializer(usuario)
+        return Response(
+            {
+                'message': 'Usuario restaurado correctamente',
+                'usuario': serializer.data
+            }, 
+            status=status.HTTP_200_OK
+        )
+    except Usuario.DoesNotExist:
+        return Response(
+            {'error': 'Usuario no encontrado o ya está activo'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
