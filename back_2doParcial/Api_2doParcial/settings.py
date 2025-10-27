@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'Usuarios',
     'Bitacora',
     'Permisos',
-    'Clientes',
+    'Cliente',
+    'Empleados',
 ]
 
 
