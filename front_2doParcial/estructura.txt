@@ -1,0 +1,86 @@
+front/
+├── node_modules/          # Dependencias instaladas (no tocar)
+├── public/                # Archivos estáticos públicos
+│   └── vite.svg          # Favicon u otros recursos estáticos
+│
+├── src/                   # Tu código fuente
+│   ├── assets/           # Imágenes, fuentes, iconos
+│   │   └── react.svg
+│   ├── App.tsx           # Componente principal
+│   ├── App.css           # Estilos del App
+│   ├── main.tsx          # Punto de entrada (monta React)
+│   ├── index.css         # Estilos globales
+│   └── vite-env.d.ts     # Tipos de Vite para TypeScript
+│
+├── index.html            # HTML principal (Vite lo usa como entrada)
+├── package.json          # Dependencias y scripts
+├── package-lock.json     # Versiones exactas de dependencias
+├── tsconfig.json         # Config principal de TypeScript
+├── tsconfig.app.json     # Config de TS para la aplicación
+├── tsconfig.node.json    # Config de TS para archivos de Node
+├── vite.config.ts        # Configuración de Vite
+├── eslint.config.js      # Reglas de linting
+└── .gitignore           # Archivos ignorados por Git
+```
+
+## 📂 Estructura escalable (proyecto mediano/grande)
+```
+front/
+├── public/
+│   ├── favicon.ico
+│   └── images/           # Imágenes estáticas
+│
+├── src/
+│   ├── assets/           # Recursos importados en código
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── styles/
+│   │
+│   ├── components/       # Componentes reutilizables
+│   │   ├── Button/
+│   │   │   ├── Button.tsx
+│   │   │   ├── Button.css
+│   │   │   └── index.ts  # Re-exporta para importar fácil
+│   │   ├── Header/
+│   │   └── Footer/
+│   │
+│   ├── pages/            # Componentes de páginas/vistas
+│   │   ├── Home/
+│   │   │   ├── Home.tsx
+│   │   │   └── Home.css
+│   │   ├── About/
+│   │   └── Contact/
+│   │
+│   ├── hooks/            # Custom hooks
+│   │   ├── useAuth.ts
+│   │   └── useFetch.ts
+│   │
+│   ├── services/         # Llamadas a APIs
+│   │   ├── api.ts
+│   │   └── authService.ts
+│   │
+│   ├── utils/            # Funciones utilitarias
+│   │   ├── formatDate.ts
+│   │   └── validators.ts
+│   │
+│   ├── types/            # Tipos e interfaces TypeScript
+│   │   ├── user.types.ts
+│   │   └── api.types.ts
+│   │
+│   ├── context/          # Context API (estado global)
+│   │   └── AuthContext.tsx
+│   │
+│   ├── routes/           # Configuración de rutas
+│   │   └── AppRoutes.tsx
+│   │
+│   ├── App.tsx           # Componente raíz
+│   ├── main.tsx          # Punto de entrada
+│   ├── index.css         # Estilos globales
+│   └── vite-env.d.ts
+│
+├── .env                  # Variables de entorno (no subir a Git)
+├── .env.example          # Ejemplo de variables de entorno
+├── index.html
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
