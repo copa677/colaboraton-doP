@@ -1,0 +1,203 @@
+GUÍA DE USO DE ENDPOINTS - APP EMPLEADOS
+=========================================
+
+BASE URL: http://localhost:8000/api/empleados/
+
+📋 NOTAS IMPORTANTES:
+- Todos los endpoints requieren autenticación JWT (excepto si se indica lo contrario)
+- Incluir token en headers: Authorization: Bearer <tu_token>
+- Para obtener token: POST /api/usuarios/login/
+
+========================================================================
+1. LISTAR EMPLEADOS ACTIVOS
+========================================================================
+URL: GET /empleados/
+Descripción: Obtiene solo empleados con estado activo
+
+Ejemplo:
+GET http://localhost:8000/api/empleados/empleados/
+
+Respuesta exitosa (200):
+[
+  {
+    "id": 1,
+    "usuario": 1,
+    "usuario_username": "juan_perez",
+    "usuario_correo": "juan@example.com",
+    "nombre_completo": "Juan Pérez",
+    "telefono": "12345678",
+    "ci": "1234567",
+    "rol": "Vendedor",
+    "direccion": "Calle 123",
+    "fecha_contratacion": "2023-01-15",
+    "salario": "5000.00",
+    "estado": true
+  }
+]
+
+========================================================================
+2. LISTAR TODOS LOS EMPLEADOS
+========================================================================
+URL: GET /empleados/todos/
+Descripción: Obtiene todos los empleados (activos e inactivos)
+
+Ejemplo:
+GET http://localhost:8000/api/empleados/empleados/todos/
+
+========================================================================
+3. CREAR EMPLEADO CON USUARIO
+========================================================================
+URL: POST /empleados/crear/
+Descripción: Crea empleado y usuario asociado en una sola operación
+
+Ejemplo de body:
+{
+  "username": "maria_garcia",
+  "correo": "maria@example.com",
+  "password": "password123",
+  "tipo_usuario": "empleado",
+  "nombre_completo": "María García",
+  "telefono": "87654321",
+  "ci": "7654321",
+  "rol": "Gerente",
+  "direccion": "Avenida 456",
+  "salario": 7000.00
+}
+
+Respuesta exitosa (201):
+{
+  "id": 2,
+  "usuario": 2,
+  "usuario_username": "maria_garcia",
+  "usuario_correo": "maria@example.com",
+  "nombre_completo": "María García",
+  "telefono": "87654321",
+  "ci": "7654321",
+  "rol": "Gerente",
+  "direccion": "Avenida 456",
+  "fecha_contratacion": "2023-10-20",
+  "salario": "7000.00",
+  "estado": true
+}
+
+========================================================================
+4. CREAR EMPLEADO SIN USUARIO
+========================================================================
+URL: POST /empleados/crear-simple/
+Descripción: Crea solo empleado sin usuario asociado
+
+Ejemplo de body:
+{
+  "nombre_completo": "Carlos López",
+  "telefono": "55555555",
+  "ci": "1122334",
+  "rol": "Asistente",
+  "direccion": "Plaza 789",
+  "salario": 3000.00
+}
+
+Nota: El campo "usuario" es opcional y puede ser null
+
+========================================================================
+5. BUSCAR EMPLEADO POR CI
+========================================================================
+URL: GET /empleados/buscar/?ci=1234567
+Descripción: Busca empleado activo por número de cédula
+
+Ejemplo:
+GET http://localhost:8000/api/empleados/empleados/buscar/?ci=1234567
+
+Respuesta error (404):
+{
+  "error": "Empleado no encontrado"
+}
+
+========================================================================
+6. LISTAR EMPLEADOS POR ROL
+========================================================================
+URL: GET /empleados/rol/{rol}/
+Descripción: Filtra empleados activos por rol específico
+
+Ejemplos:
+GET http://localhost:8000/api/empleados/empleados/rol/Vendedor/
+GET http://localhost:8000/api/empleados/empleados/rol/Gerente/
+GET http://localhost:8000/api/empleados/empleados/rol/Asistente/
+
+========================================================================
+7. OBTENER EMPLEADO ESPECÍFICO
+========================================================================
+URL: GET /empleados/{id}/
+Descripción: Obtiene un empleado específico por ID (solo activos)
+
+Ejemplo:
+GET http://localhost:8000/api/empleados/empleados/1/
+
+Respuesta error (404):
+{
+  "error": "Empleado no encontrado o inactivo"
+}
+
+========================================================================
+8. ACTUALIZAR EMPLEADO
+========================================================================
+URL: PUT /empleados/{id}/actualizar/
+Descripción: Actualiza datos de un empleado activo
+
+Ejemplo:
+PUT http://localhost:8000/api/empleados/empleados/1/actualizar/
+
+Body (campos parciales permitidos):
+{
+  "nombre_completo": "Juan Pérez Actualizado",
+  "telefono": "99999999",
+  "rol": "Supervisor"
+}
+
+========================================================================
+9. ELIMINAR EMPLEADO (LÓGICA)
+========================================================================
+URL: DELETE /empleados/{id}/eliminar/
+Descripción: Eliminación lógica (cambia estado a False)
+
+Ejemplo:
+DELETE http://localhost:8000/api/empleados/empleados/1/eliminar/
+
+Respuesta exitosa (200):
+{
+  "message": "Empleado eliminado correctamente (eliminación lógica)"
+}
+
+========================================================================
+10. RESTAURAR EMPLEADO
+========================================================================
+URL: POST /empleados/{id}/restaurar/
+Descripción: Reactiva un empleado previamente eliminado
+
+Ejemplo:
+POST http://localhost:8000/api/empleados/empleados/1/restaurar/
+
+Respuesta exitosa (200):
+{
+  "message": "Empleado restaurado correctamente",
+  "empleado": {
+    ...datos del empleado...
+  }
+}
+
+🛑 CÓDIGOS DE ERROR COMUNES:
+- 400: Bad Request (datos de entrada inválidos)
+- 401: Unauthorized (token inválido o faltante)
+- 404: Not Found (recurso no encontrado)
+- 500: Internal Server Error (error del servidor)
+
+🔐 VALIDACIONES:
+- CI debe ser único entre empleados activos
+- Username y correo únicos al crear con usuario
+- Solo se pueden modificar empleados activos
+- No se puede eliminar un empleado ya inactivo
+
+💡 CONSEJOS:
+- Usar POST /empleados/crear/ cuando necesites crear credenciales de acceso
+- Usar POST /empleados/crear-simple/ para empleados sin acceso al sistema
+- Verificar siempre el estado del empleado antes de operaciones
+- Usar los endpoints de búsqueda para validar datos antes de crear

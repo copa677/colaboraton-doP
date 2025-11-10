@@ -3,12 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Permiso
 from .serializers import PermisoSerializer
-from Usuarios.decorators import jwt_required
 
 
 # GET /api/permisos/ - Listar todos los permisos (PROTEGIDA)
 @api_view(['GET'])
-@jwt_required
 def listar_permisos(request):
     permisos = Permiso.objects.all()
     serializer = PermisoSerializer(permisos, many=True)
@@ -17,7 +15,6 @@ def listar_permisos(request):
 
 # GET /api/permisos/usuario/{usuario_id}/ - Listar permisos de un usuario específico (PROTEGIDA)
 @api_view(['GET'])
-@jwt_required
 def listar_permisos_por_usuario(request, usuario_id):
     permisos = Permiso.objects.filter(usuario_id=usuario_id)
     serializer = PermisoSerializer(permisos, many=True)
@@ -26,7 +23,6 @@ def listar_permisos_por_usuario(request, usuario_id):
 
 # GET /api/permisos/{id}/ - Obtener un permiso específico (PROTEGIDA)
 @api_view(['GET'])
-@jwt_required
 def obtener_permiso(request, pk):
     try:
         permiso = Permiso.objects.get(pk=pk)
@@ -38,7 +34,6 @@ def obtener_permiso(request, pk):
 
 # POST /api/permisos/crear/ - Crear un permiso (PROTEGIDA)
 @api_view(['POST'])
-@jwt_required
 def crear_permiso(request):
     serializer = PermisoSerializer(data=request.data)
     if serializer.is_valid():
@@ -49,7 +44,6 @@ def crear_permiso(request):
 
 # PUT /api/permisos/{id}/actualizar/ - Actualizar un permiso (PROTEGIDA)
 @api_view(['PUT'])
-@jwt_required
 def actualizar_permiso(request, pk):
     try:
         permiso = Permiso.objects.get(pk=pk)
@@ -65,7 +59,6 @@ def actualizar_permiso(request, pk):
 
 # DELETE /api/permisos/{id}/eliminar/ - Eliminar permiso (PROTEGIDA)
 @api_view(['DELETE'])
-@jwt_required
 def eliminar_permiso(request, pk):
     try:
         permiso = Permiso.objects.get(pk=pk)

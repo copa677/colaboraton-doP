@@ -1,0 +1,361 @@
+GUÍA DE USO DE ENDPOINTS - APP CLIENTES (ACTUALIZADA)
+=====================================================
+
+BASE URL: http://localhost:8000/api/clientes/
+
+📋 NOTAS IMPORTANTES:
+- Todos los endpoints requieren autenticación JWT
+- Incluir token en headers: Authorization: Bearer <tu_token>
+- Para obtener token: POST /api/usuarios/login/
+- Ahora TODO cliente debe tener un usuario asociado
+
+========================================================================
+1. CREAR CLIENTE CON USUARIO (ÚNICO MÉTODO DE CREACIÓN)
+========================================================================
+URL: POST /crear/
+Descripción: Crea cliente y usuario asociado en transacción atómica
+
+Ejemplo de petición:
+POST http://localhost:8000/api/clientes/crear/
+Content-Type: application/json
+Authorization: Bearer tu_token_jwt_aqui
+
+{
+    "username": "cliente_ana",
+    "correo": "ana.garcia@email.com",
+    "password": "claveSegura123",
+    "tipo_usuario": "cliente",
+    "nombre_completo": "Ana García López",
+    "telefono": "71234567",
+    "direccion": "Avenida Central 456, Ciudad",
+    "ci": "87654321"
+}
+
+Ejemplo de respuesta exitosa (201):
+{
+    "id": 1,
+    "usuario": 15,
+    "usuario_username": "cliente_ana",
+    "usuario_correo": "ana.garcia@email.com",
+    "nombre_completo": "Ana García López",
+    "telefono": "71234567",
+    "direccion": "Avenida Central 456, Ciudad",
+    "ci": "87654321",
+    "fecha_registro": "2024-01-15",
+    "estado": true
+}
+
+Ejemplo de error (400) - username duplicado:
+{
+    "username": ["Este username ya está en uso"]
+}
+
+Ejemplo de error (400) - CI duplicado:
+{
+    "ci": ["Ya existe un cliente activo con este CI"]
+}
+
+========================================================================
+2. LISTAR CLIENTES ACTIVOS
+========================================================================
+URL: GET /listar/
+Descripción: Obtiene solo clientes con estado activo
+
+Ejemplo:
+GET http://localhost:8000/api/clientes/listar/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta (200):
+[
+    {
+        "id": 1,
+        "usuario": 15,
+        "usuario_username": "cliente_ana",
+        "usuario_correo": "ana.garcia@email.com",
+        "nombre_completo": "Ana García López",
+        "telefono": "71234567",
+        "direccion": "Avenida Central 456, Ciudad",
+        "ci": "87654321",
+        "fecha_registro": "2024-01-15",
+        "estado": true
+    },
+    {
+        "id": 2,
+        "usuario": 16,
+        "usuario_username": "cliente_carlos",
+        "usuario_correo": "carlos.rodriguez@email.com",
+        "nombre_completo": "Carlos Rodríguez",
+        "telefono": "69874512",
+        "direccion": "Calle Norte 789",
+        "ci": "11223344",
+        "fecha_registro": "2024-01-14",
+        "estado": true
+    }
+]
+
+========================================================================
+3. LISTAR TODOS LOS CLIENTES
+========================================================================
+URL: GET /todos/
+Descripción: Obtiene todos los clientes (activos e inactivos)
+
+Ejemplo:
+GET http://localhost:8000/api/clientes/todos/
+Authorization: Bearer tu_token_jwt_aqui
+
+========================================================================
+4. OBTENER CLIENTE ESPECÍFICO
+========================================================================
+URL: GET /{id}/
+Descripción: Obtiene un cliente específico por ID (solo activos)
+
+Ejemplo:
+GET http://localhost:8000/api/clientes/1/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta error (404):
+{
+    "error": "Cliente no encontrado o inactivo"
+}
+
+========================================================================
+5. ACTUALIZAR CLIENTE
+========================================================================
+URL: PUT /{id}/actualizar/
+Descripción: Actualiza datos de un cliente activo
+
+Ejemplo:
+PUT http://localhost:8000/api/clientes/1/actualizar/
+Authorization: Bearer tu_token_jwt_aqui
+
+Body (campos parciales permitidos):
+{
+    "nombre_completo": "Ana García López de Rodríguez",
+    "telefono": "77778888",
+    "direccion": "Nueva dirección 123"
+}
+
+⚠️ NOTA: No se puede cambiar el usuario asociado
+
+========================================================================
+6. ELIMINAR CLIENTE (ELIMINACIÓN LÓGICA)
+========================================================================
+URL: DELETE /{id}/eliminar/
+Descripción: Eliminación lógica (cambia estado a False)
+
+Ejemplo:
+DELETE http://localhost:8000/api/clientes/1/eliminar/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta exitosa (200):
+{
+    "message": "Cliente eliminado correctamente (eliminación lógica)"
+}
+
+Respuesta error (404):
+{
+    "error": "Cliente no encontrado o ya inactivo"
+}
+
+========================================================================
+7. RESTAURAR CLIENTE
+========================================================================
+URL: POST /{id}/restaurar/
+Descripción: Reactiva un cliente previamente eliminado
+
+Ejemplo:
+POST http://localhost:8000/api/clientes/1/restaurar/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta exitosa (200):
+{
+    "message": "Cliente restaurado correctamente",
+    "cliente": {
+        "id": 1,
+        "usuario": 15,
+        "usuario_username": "cliente_ana",
+        "usuario_correo": "ana.garcia@email.com",
+        "nombre_completo": "Ana García López",
+        "telefono": "71234567",
+        "direccion": "Avenida Central 456, Ciudad",
+        "ci": "87654321",
+        "fecha_registro": "2024-01-15",
+        "estado": true
+    }
+}
+
+========================================================================
+8. BUSCAR CLIENTE POR CI
+========================================================================
+URL: GET /buscar/ci/?ci=87654321
+Descripción: Busca cliente activo por número de cédula
+
+Ejemplo:
+GET http://localhost:8000/api/clientes/buscar/ci/?ci=87654321
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta error (404):
+{
+    "error": "Cliente no encontrado"
+}
+
+Error por parámetro faltante (400):
+{
+    "error": "Parámetro CI requerido"
+}
+
+========================================================================
+9. BUSCAR CLIENTE POR TELÉFONO
+========================================================================
+URL: GET /buscar/telefono/?telefono=71234567
+Descripción: Busca cliente activo por número de teléfono
+
+Ejemplo:
+GET http://localhost:8000/api/clientes/buscar/telefono/?telefono=71234567
+Authorization: Bearer tu_token_jwt_aqui
+
+========================================================================
+EJEMPLOS CON CÓDIGO
+========================================================================
+
+📌 Ejemplo con Python requests:
+
+import requests
+import json
+
+# Configuración
+BASE_URL = "http://localhost:8000/api/clientes"
+TOKEN = "tu_token_jwt_aqui"
+
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {TOKEN}"
+}
+
+# 1. Crear cliente
+def crear_cliente():
+    url = f"{BASE_URL}/crear/"
+    datos = {
+        "username": "nuevo_cliente",
+        "correo": "nuevo@cliente.com",
+        "password": "miPassword123",
+        "tipo_usuario": "cliente",
+        "nombre_completo": "Nuevo Cliente",
+        "telefono": "61112233",
+        "direccion": "Dirección del nuevo cliente",
+        "ci": "44556677"
+    }
+    
+    response = requests.post(url, json=datos, headers=headers)
+    
+    if response.status_code == 201:
+        print("✅ Cliente creado:", response.json())
+    else:
+        print("❌ Error:", response.json())
+    
+    return response.json()
+
+# 2. Listar clientes activos
+def listar_clientes():
+    url = f"{BASE_URL}/listar/"
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        clientes = response.json()
+        print(f"📋 Total clientes activos: {len(clientes)}")
+        for cliente in clientes:
+            print(f"  - {cliente['nombre_completo']} ({cliente['ci']})")
+    else:
+        print("❌ Error:", response.json())
+
+# 3. Buscar por CI
+def buscar_por_ci(ci):
+    url = f"{BASE_URL}/buscar/ci/?ci={ci}"
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        print("🔍 Cliente encontrado:", response.json())
+    else:
+        print("❌ Cliente no encontrado")
+
+# Ejecutar ejemplos
+if __name__ == "__main__":
+    # crear_cliente()
+    listar_clientes()
+    # buscar_por_ci("87654321")
+
+📌 Ejemplo con JavaScript fetch:
+
+// Crear cliente
+const crearCliente = async () => {
+    const url = 'http://localhost:8000/api/clientes/crear/';
+    const token = 'tu_token_jwt_aqui';
+    
+    const datosCliente = {
+        username: "cliente_js",
+        correo: "js@cliente.com",
+        password: "password123",
+        tipo_usuario: "cliente",
+        nombre_completo: "Cliente desde JS",
+        telefono: "60000000",
+        direccion: "Dirección JS",
+        ci: "99887766"
+    };
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(datosCliente)
+        });
+        
+        if (response.ok) {
+            const cliente = await response.json();
+            console.log('✅ Cliente creado:', cliente);
+            return cliente;
+        } else {
+            const error = await response.json();
+            console.error('❌ Error:', error);
+            return error;
+        }
+    } catch (error) {
+        console.error('❌ Error de conexión:', error);
+    }
+};
+
+// Llamar la función
+crearCliente();
+
+========================================================================
+🛑 CÓDIGOS DE ERROR COMUNES
+========================================================================
+- 400: Bad Request (datos inválidos, validaciones fallidas)
+- 401: Unauthorized (token inválido o faltante)
+- 404: Not Found (recurso no encontrado)
+- 500: Internal Server Error (error del servidor)
+
+🔐 VALIDACIONES IMPLEMENTADAS
+========================================================================
+- ✅ Username único entre usuarios activos
+- ✅ Correo único entre usuarios activos
+- ✅ CI único entre clientes activos
+- ✅ Teléfono único entre clientes activos
+- ✅ Transacción atómica (rollback si falla)
+- ✅ Usuario obligatorio para cada cliente
+
+💡 CONSEJOS DE USO
+========================================================================
+1. Siempre verificar la respuesta HTTP status code
+2. Usar los endpoints de búsqueda antes de crear
+3. El campo 'tipo_usuario' por defecto es 'cliente'
+4. La eliminación es lógica, los datos se mantienen
+5. No se puede cambiar el usuario asociado después de crear
+
+🎯 FLUJO RECOMENDADO PARA CREAR CLIENTE:
+1. Verificar que el CI no existe: GET /buscar/ci/?ci=1234567
+2. Verificar que el teléfono no existe: GET /buscar/telefono/?telefono=71234567
+3. Crear cliente: POST /crear/ con todos los datos
+4. Guardar el ID del cliente y usuario para referencias futuras

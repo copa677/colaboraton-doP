@@ -1,19 +1,79 @@
 import { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Users, Briefcase, UserCheck, BookOpen, Shield, 
-  Menu, X, Zap, LogOut, ChevronRight 
+  Menu, X, Zap, LogOut, ChevronRight , Tags, Building2, Package
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext'; 
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const menuItems = [
     { path: '/home/usuarios', label: 'Usuarios', icon: Users },
     { path: '/home/empleado', label: 'Empleado', icon: Briefcase },
     { path: '/home/cliente', label: 'Cliente', icon: UserCheck },
+    { path: '/home/permisos', label: 'Permisos', icon: Shield },
+    { path: '/home/categorias', label: 'Categorias', icon: Tags },
+    { path: '/home/marcas', label: 'Marcas', icon: Building2 },
+    { path: '/home/productos', label: 'Productos', icon: Package },
   ];
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      // Simular un pequeño delay para mejor UX
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      logout();
+      
+      // Mostrar toast de éxito
+      toast.success('Sesión cerrada exitosamente', {
+        duration: 3000,
+        position: 'top-right',
+        icon: '👋',
+        style: {
+          background: '#10B981',
+          color: 'white',
+        },
+      });
+      
+      // Redirigir al login después de un breve delay
+      setTimeout(() => {
+        navigate('/login');
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      
+      // Mostrar toast de error
+      toast.error('Error al cerrar sesión. Intenta nuevamente.', {
+        duration: 4000,
+        position: 'top-right',
+        style: {
+          background: '#EF4444',
+          color: 'white',
+        },
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -68,9 +128,25 @@ export default function Home() {
 
         {/* Logout */}
         <div className="p-4 border-t border-blue-500">
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-blue-100 hover:bg-blue-500 rounded-lg transition-colors">
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span className="font-medium">Cerrar Sesión</span>}
+          <button 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              isLoggingOut 
+                ? 'opacity-50 cursor-not-allowed' 
+                : 'text-blue-100 hover:bg-blue-500 hover:text-white'
+            }`}
+          >
+            {isLoggingOut ? (
+              <div className="w-5 h-5 border-2 border-blue-100 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+            )}
+            {sidebarOpen && (
+              <span className="font-medium">
+                {isLoggingOut ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+              </span>
+            )}
           </button>
         </div>
       </aside>
@@ -81,15 +157,24 @@ export default function Home() {
           <div className="px-8 py-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-              <p className="text-gray-600 mt-1">Bienvenido de nuevo, Admin</p>
+              <p className="text-gray-600 mt-1">
+                Bienvenido de nuevo, {user?.username || 'Usuario'}
+              </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-800">Admin Usuario</p>
-                <p className="text-xs text-gray-500">admin@techhome.com</p>
+                <p className="text-sm font-medium text-gray-800">
+                  {user?.username || 'Usuario'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {user?.correo || 'usuario@techhome.com'}
+                </p>
+                <p className="text-xs text-blue-600 font-medium capitalize">
+                  {user?.tipo_usuario || 'Usuario'}
+                </p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
-                A
+                {user ? getInitials(user.username) : 'U'}
               </div>
             </div>
           </div>
