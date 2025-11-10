@@ -1,40 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Package, Search, Plus, Edit, Trash2, MoreVertical, RefreshCw, Image, Tag, DollarSign, Grid } from 'lucide-react';
+import { ProductoModal } from '../../components/productos/ProductoModal';
+import { listarProductos, eliminarProducto, restaurarProducto, type Producto as ProductoService } from '../../services/productos.service';
+import { getAllCategorias, type Categoria as CategoriaService } from '../../services/categorias.service';
+import { getAllMarcas, type Marca as MarcaService } from '../../services/marcas.service';
 
-// Tipos
-interface Categoria {
-    id: number;
-    nombre: string;
-}
+// Tipos locales que extienden los tipos del servicio
+interface Categoria extends CategoriaService {}
 
-interface Marca {
-    id: number;
-    nombre: string;
-}
+interface Marca extends MarcaService {}
 
 interface Imagen {
     id: number;
     imagen: string;
+    imagen_url: string;
     es_principal: boolean;
+    estado: boolean;
 }
 
 interface Especificacion {
     id: number;
     nombre: string;
     descripcion: string;
+    estado: boolean;
 }
 
-interface Producto {
-    id: number;
-    descripcion: string;
-    precio: number;
-    categoria: Categoria;
-    marca: Marca;
-    estado: boolean;
-    imagenes: Imagen[];
-    especificaciones: Especificacion[];
-    fecha_creacion: string;
-}
+interface Producto extends ProductoService {}
 
 export default function ProductosPage() {
     const [searchTerm, setSearchTerm] = useState<string>('');
@@ -42,57 +33,64 @@ export default function ProductosPage() {
     const [filterMarca, setFilterMarca] = useState<string>('todos');
     const [filterEstado, setFilterEstado] = useState<string>('todos');
     const [loading, setLoading] = useState<boolean>(false);
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid'); // 'grid' o 'table'
+    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    
+    // Estados para datos reales
+    const [productos, setProductos] = useState<Producto[]>([]);
+    const [categorias, setCategorias] = useState<Categoria[]>([]);
+    const [marcas, setMarcas] = useState<Marca[]>([]);
+    
+    // Estados para el modal
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
+    const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+    const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
 
-    // Mock data
-    const productos: Producto[] = [
-        {
-            id: 1,
-            descripcion: 'Laptop Dell Inspiron 15',
-            precio: 850.0,
-            categoria: { id: 1, nombre: 'Laptops' },
-            marca: { id: 1, nombre: 'Dell' },
-            estado: true,
-            imagenes: [
-                { id: 1, imagen: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400', es_principal: true },
-                { id: 2, imagen: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400', es_principal: false }
-            ],
-            especificaciones: [
-                { id: 1, nombre: 'Procesador', descripcion: 'Intel Core i7 11th Gen' },
-                { id: 2, nombre: 'RAM', descripcion: '16GB DDR4' },
-                { id: 3, nombre: 'Almacenamiento', descripcion: '512GB SSD' }
-            ],
-            fecha_creacion: '2024-01-15'
-        },
-        {
-            id: 2,
-            descripcion: 'Mouse Logitech MX Master 3',
-            precio: 99.99,
-            categoria: { id: 2, nombre: 'Accesorios' },
-            marca: { id: 2, nombre: 'Logitech' },
-            estado: true,
-            imagenes: [
-                { id: 3, imagen: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400', es_principal: true }
-            ],
-            especificaciones: [
-                { id: 4, nombre: 'Conectividad', descripcion: 'Bluetooth y USB-C' },
-                { id: 5, nombre: 'DPI', descripcion: 'Hasta 4000 DPI' }
-            ],
-            fecha_creacion: '2024-02-10'
-        },
-        // ... resto de productos (igual que antes)
-    ];
+    // Cargar datos iniciales
+    useEffect(() => {
+        cargarDatos();
+    }, []);
 
-    const categorias = [...new Set(productos.map(p => p.categoria.nombre))];
-    const marcas = [...new Set(productos.map(p => p.marca.nombre))];
+    const cargarDatos = async () => {
+        setLoading(true);
+        try {
+            const [productosData, categoriasData, marcasData] = await Promise.all([
+                listarProductos(),
+                getAllCategorias(),
+                getAllMarcas()
+            ]);
+            
+            setProductos(productosData);
+            setCategorias(categoriasData);
+            setMarcas(marcasData);
+        } catch (error) {
+            console.error('Error cargando datos:', error);
+            alert('Error al cargar los datos');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const cargarProductos = async () => {
+        try {
+            const productosData = await listarProductos();
+            setProductos(productosData);
+        } catch (error) {
+            console.error('Error cargando productos:', error);
+            alert('Error al cargar los productos');
+        }
+    };
 
     const productosFiltrados = productos.filter(producto => {
         const coincideBusqueda =
             producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            producto.marca.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+            (producto.nombre_marca && producto.nombre_marca.toLowerCase().includes(searchTerm.toLowerCase()));
 
-        const coincideCategoria = filterCategoria === 'todos' || producto.categoria.nombre === filterCategoria;
-        const coincideMarca = filterMarca === 'todos' || producto.marca.nombre === filterMarca;
+        const coincideCategoria = filterCategoria === 'todos' || 
+            (producto.nombre_categoria && producto.nombre_categoria === filterCategoria);
+        
+        const coincideMarca = filterMarca === 'todos' || 
+            (producto.nombre_marca && producto.nombre_marca === filterMarca);
+        
         const coincideEstado =
             filterEstado === 'todos' ||
             (filterEstado === 'activo' && producto.estado) ||
@@ -104,7 +102,7 @@ export default function ProductosPage() {
     const totalProductos = productos.length;
     const productosActivos = productos.filter(p => p.estado).length;
     const productosInactivos = productos.filter(p => !p.estado).length;
-    const valorInventario = productos.filter(p => p.estado).reduce((sum, p) => sum + p.precio, 0);
+    const valorInventario = productos.filter(p => p.estado).reduce((sum, p) => sum + parseFloat(p.precio), 0);
 
     const getCategoriaColor = (categoria: string) => {
         const colors: { [key: string]: string } = {
@@ -112,10 +110,58 @@ export default function ProductosPage() {
             'Accesorios': 'bg-green-100 text-green-700',
             'Monitores': 'bg-purple-100 text-purple-700',
             'Audio': 'bg-pink-100 text-pink-700',
-            'Tablets': 'bg-orange-100 text-orange-700'
+            'Tablets': 'bg-orange-100 text-orange-700',
+            'Computadoras': 'bg-indigo-100 text-indigo-700',
+            'Componentes': 'bg-cyan-100 text-cyan-700',
+            'Periféricos': 'bg-amber-100 text-amber-700'
         };
         return colors[categoria] || 'bg-gray-100 text-gray-700';
     };
+
+    // Handlers para el modal
+    const handleCrearProducto = () => {
+        setModalMode('create');
+        setProductoSeleccionado(null);
+        setModalOpen(true);
+    };
+
+    const handleEditarProducto = (producto: Producto) => {
+        setModalMode('edit');
+        setProductoSeleccionado(producto);
+        setModalOpen(true);
+    };
+
+    const handleEliminarProducto = async (producto: Producto) => {
+        if (window.confirm(`¿Estás seguro de eliminar el producto "${producto.descripcion}"?`)) {
+            try {
+                await eliminarProducto(producto.id);
+                await cargarProductos();
+                alert('Producto eliminado correctamente');
+            } catch (error) {
+                console.error('Error eliminando producto:', error);
+                alert('Error al eliminar el producto');
+            }
+        }
+    };
+
+    const handleRestaurarProducto = async (producto: Producto) => {
+        try {
+            await restaurarProducto(producto.id);
+            await cargarProductos();
+            alert('Producto restaurado correctamente');
+        } catch (error) {
+            console.error('Error restaurando producto:', error);
+            alert('Error al restaurar el producto');
+        }
+    };
+
+    const handleSuccess = () => {
+        cargarProductos();
+    };
+
+    // Obtener categorías y marcas únicas para los filtros
+    const categoriasUnicas = [...new Set(productos.map(p => p.nombre_categoria).filter(Boolean))];
+    const marcasUnicas = [...new Set(productos.map(p => p.nombre_marca).filter(Boolean))];
 
     return (
         <div className="space-y-6">
@@ -127,14 +173,17 @@ export default function ProductosPage() {
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => setLoading(!loading)}
+                        onClick={cargarDatos}
                         disabled={loading}
                         className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md disabled:opacity-50"
                     >
                         <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                        Actualizar
+                        {loading ? 'Cargando...' : 'Actualizar'}
                     </button>
-                    <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md">
+                    <button 
+                        onClick={handleCrearProducto}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-md"
+                    >
                         <Plus className="w-5 h-5" />
                         Nuevo Producto
                     </button>
@@ -203,7 +252,7 @@ export default function ProductosPage() {
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="todos">Todas las categorías</option>
-                        {categorias.map(cat => (
+                        {categoriasUnicas.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
                     </select>
@@ -213,7 +262,7 @@ export default function ProductosPage() {
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="todos">Todas las marcas</option>
-                        {marcas.map(marca => (
+                        {marcasUnicas.map(marca => (
                             <option key={marca} value={marca}>{marca}</option>
                         ))}
                     </select>
@@ -235,13 +284,28 @@ export default function ProductosPage() {
                 </div>
             </div>
 
+            {/* Loading State */}
+            {loading && productos.length === 0 && (
+                <div className="bg-white p-12 rounded-xl shadow-md text-center">
+                    <div className="flex justify-center">
+                        <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                    </div>
+                    <p className="text-gray-500 mt-4">Cargando productos...</p>
+                </div>
+            )}
+
             {/* Products Grid View */}
-            {viewMode === 'grid' ? (
+            {!loading && viewMode === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {productosFiltrados.length === 0 ? (
                         <div className="col-span-full bg-white p-12 rounded-xl shadow-md text-center">
                             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500">No se encontraron productos</p>
+                            <p className="text-gray-500">
+                                {productos.length === 0 
+                                    ? 'No hay productos registrados' 
+                                    : 'No se encontraron productos con los filtros aplicados'
+                                }
+                            </p>
                         </div>
                     ) : (
                         productosFiltrados.map(producto => (
@@ -249,7 +313,9 @@ export default function ProductosPage() {
                                 {/* Imagen Principal */}
                                 <div className="relative h-48 bg-gray-100 overflow-hidden">
                                     <img
-                                        src={producto.imagenes.find(img => img.es_principal)?.imagen || producto.imagenes[0]?.imagen}
+                                        src={producto.imagenes?.find(img => img.es_principal)?.imagen_url || 
+                                             producto.imagenes?.[0]?.imagen_url || 
+                                             '/placeholder-image.jpg'}
                                         alt={producto.descripcion}
                                         className="w-full h-full object-cover"
                                     />
@@ -258,7 +324,7 @@ export default function ProductosPage() {
                                             }`}>
                                             {producto.estado ? 'Activo' : 'Inactivo'}
                                         </span>
-                                        {producto.imagenes.length > 1 && (
+                                        {producto.imagenes && producto.imagenes.length > 1 && (
                                             <span className="bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                                                 <Image className="w-3 h-3" />
                                                 {producto.imagenes.length}
@@ -275,23 +341,27 @@ export default function ProductosPage() {
                                                 {producto.descripcion}
                                             </h3>
                                             <div className="flex items-center gap-2 mb-2">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoriaColor(producto.categoria.nombre)}`}>
-                                                    {producto.categoria.nombre}
-                                                </span>
-                                                <span className="text-xs text-gray-500 flex items-center gap-1">
-                                                    <Tag className="w-3 h-3" />
-                                                    {producto.marca.nombre}
-                                                </span>
+                                                {producto.nombre_categoria && (
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoriaColor(producto.nombre_categoria)}`}>
+                                                        {producto.nombre_categoria}
+                                                    </span>
+                                                )}
+                                                {producto.nombre_marca && (
+                                                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                        <Tag className="w-3 h-3" />
+                                                        {producto.nombre_marca}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="mb-4">
-                                        <p className="text-2xl font-bold text-blue-600">${producto.precio.toFixed(2)}</p>
+                                        <p className="text-2xl font-bold text-blue-600">${parseFloat(producto.precio).toFixed(2)}</p>
                                     </div>
 
                                     {/* Especificaciones */}
-                                    {producto.especificaciones.length > 0 && (
+                                    {producto.especificaciones && producto.especificaciones.length > 0 && (
                                         <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                                             <p className="text-xs font-semibold text-gray-600 mb-2">Especificaciones:</p>
                                             <ul className="space-y-1">
@@ -311,16 +381,25 @@ export default function ProductosPage() {
 
                                     {/* Acciones */}
                                     <div className="flex gap-2">
-                                        <button className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg transition-colors text-sm font-medium">
+                                        <button 
+                                            onClick={() => handleEditarProducto(producto)}
+                                            className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                                        >
                                             <Edit className="w-4 h-4" />
                                             Editar
                                         </button>
                                         {producto.estado ? (
-                                            <button className="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg transition-colors">
+                                            <button 
+                                                onClick={() => handleEliminarProducto(producto)}
+                                                className="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg transition-colors"
+                                            >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
                                         ) : (
-                                            <button className="flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-600 px-3 py-2 rounded-lg transition-colors text-sm">
+                                            <button 
+                                                onClick={() => handleRestaurarProducto(producto)}
+                                                className="flex items-center justify-center gap-2 bg-green-50 hover:bg-green-100 text-green-600 px-3 py-2 rounded-lg transition-colors text-sm"
+                                            >
                                                 Restaurar
                                             </button>
                                         )}
@@ -333,8 +412,10 @@ export default function ProductosPage() {
                         ))
                     )}
                 </div>
-            ) : (
-                /* Products Table View */
+            )}
+
+            {/* Products Table View */}
+            {!loading && viewMode === 'table' && (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full">
@@ -353,7 +434,10 @@ export default function ProductosPage() {
                                 {productosFiltrados.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                                            No se encontraron productos
+                                            {productos.length === 0 
+                                                ? 'No hay productos registrados' 
+                                                : 'No se encontraron productos con los filtros aplicados'
+                                            }
                                         </td>
                                     </tr>
                                 ) : (
@@ -362,7 +446,9 @@ export default function ProductosPage() {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <img
-                                                        src={producto.imagenes.find(img => img.es_principal)?.imagen || producto.imagenes[0]?.imagen}
+                                                        src={producto.imagenes?.find(img => img.es_principal)?.imagen_url || 
+                                                             producto.imagenes?.[0]?.imagen_url || 
+                                                             '/placeholder-image.jpg'}
                                                         alt={producto.descripcion}
                                                         className="w-12 h-12 rounded-lg object-cover"
                                                     />
@@ -373,18 +459,20 @@ export default function ProductosPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoriaColor(producto.categoria.nombre)}`}>
-                                                    {producto.categoria.nombre}
-                                                </span>
+                                                {producto.nombre_categoria && (
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getCategoriaColor(producto.nombre_categoria)}`}>
+                                                        {producto.nombre_categoria}
+                                                    </span>
+                                                )}
                                             </td>
-                                            <td className="px-6 py-4 text-gray-600">{producto.marca.nombre}</td>
+                                            <td className="px-6 py-4 text-gray-600">{producto.nombre_marca}</td>
                                             <td className="px-6 py-4">
-                                                <span className="font-bold text-blue-600">${producto.precio.toFixed(2)}</span>
+                                                <span className="font-bold text-blue-600">${parseFloat(producto.precio).toFixed(2)}</span>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className="text-sm text-gray-600 flex items-center gap-1">
                                                     <Image className="w-4 h-4" />
-                                                    {producto.imagenes.length}
+                                                    {producto.imagenes?.length || 0}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
@@ -395,15 +483,24 @@ export default function ProductosPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
-                                                    <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600">
+                                                    <button 
+                                                        onClick={() => handleEditarProducto(producto)}
+                                                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors text-blue-600"
+                                                    >
                                                         <Edit className="w-4 h-4" />
                                                     </button>
                                                     {producto.estado ? (
-                                                        <button className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600">
+                                                        <button 
+                                                            onClick={() => handleEliminarProducto(producto)}
+                                                            className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-600"
+                                                        >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     ) : (
-                                                        <button className="p-2 hover:bg-green-50 rounded-lg transition-colors text-green-600">
+                                                        <button 
+                                                            onClick={() => handleRestaurarProducto(producto)}
+                                                            className="p-2 hover:bg-green-50 rounded-lg transition-colors text-green-600"
+                                                        >
                                                             <span className="text-xs font-medium">Restaurar</span>
                                                         </button>
                                                     )}
@@ -433,6 +530,17 @@ export default function ProductosPage() {
                     {filterEstado !== 'todos' && `Estado: ${filterEstado}`}
                 </div>
             </div>
+
+            {/* Modal */}
+            <ProductoModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                mode={modalMode}
+                producto={productoSeleccionado}
+                categorias={categorias}
+                marcas={marcas}
+                onSuccess={handleSuccess}
+            />
         </div>
     );
 }
