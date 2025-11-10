@@ -6,7 +6,7 @@ class Empleado(models.Model):
         Usuario, 
         on_delete=models.CASCADE, 
         related_name='empleado',
-        null=True,
+        null=False,
         blank=True
     )
     nombre_completo = models.CharField(max_length=150)

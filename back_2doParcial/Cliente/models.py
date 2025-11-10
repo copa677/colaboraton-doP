@@ -1,6 +1,14 @@
 from django.db import models
+from Usuarios.models import Usuario
 
 class Cliente(models.Model):
+    usuario = models.OneToOneField(
+        Usuario, 
+        on_delete=models.CASCADE, 
+        related_name='cliente',
+        null=False,
+        blank=True
+    )
     nombre_completo = models.CharField(max_length=150)
     telefono = models.CharField(max_length=20, unique=True)
     direccion = models.TextField()

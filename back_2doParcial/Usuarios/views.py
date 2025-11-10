@@ -4,7 +4,6 @@ from rest_framework import status
 from .models import Usuario
 from .serializers import UsuarioSerializer, LoginSerializer
 from .jwt_utils import generate_token
-from .decorators import jwt_required
 
 # POST /api/login/ - Login de usuario
 @api_view(['POST'])
@@ -51,7 +50,6 @@ def login(request):
 
 # GET /api/usuarios/ - Listar usuarios activos (PROTEGIDA)
 @api_view(['GET'])
-@jwt_required
 def listar_usuarios(request):
     usuarios = Usuario.objects.filter(estado=True)
     serializer = UsuarioSerializer(usuarios, many=True)
@@ -60,7 +58,6 @@ def listar_usuarios(request):
 
 # GET /api/usuarios/todos/ - Listar todos los usuarios (PROTEGIDA)
 @api_view(['GET'])
-@jwt_required
 def listar_todos_usuarios(request):
     usuarios = Usuario.objects.all()
     serializer = UsuarioSerializer(usuarios, many=True)
@@ -79,7 +76,6 @@ def crear_usuario(request):
 
 # GET /api/usuarios/{id}/ - Obtener un usuario específico (PROTEGIDA)
 @api_view(['GET'])
-@jwt_required
 def obtener_usuario(request, pk):
     try:
         usuario = Usuario.objects.get(pk=pk, estado=True)
@@ -94,7 +90,6 @@ def obtener_usuario(request, pk):
 
 # PUT /api/usuarios/{id}/editar/ - Editar un usuario (PROTEGIDA)
 @api_view(['PUT'])
-@jwt_required
 def editar_usuario(request, pk):
     try:
         usuario = Usuario.objects.get(pk=pk, estado=True)
@@ -113,7 +108,6 @@ def editar_usuario(request, pk):
 
 # DELETE /api/usuarios/{id}/eliminar/ - Eliminar usuario (PROTEGIDA) - Eliminación lógica
 @api_view(['DELETE'])
-@jwt_required
 def eliminar_usuario(request, pk):
     try:
         usuario = Usuario.objects.get(pk=pk, estado=True)
@@ -131,7 +125,6 @@ def eliminar_usuario(request, pk):
 
 # POST /api/usuarios/{id}/restaurar/ - Restaurar usuario (PROTEGIDA)
 @api_view(['POST'])
-@jwt_required
 def restaurar_usuario(request, pk):
     try:
         usuario = Usuario.objects.get(pk=pk, estado=False)

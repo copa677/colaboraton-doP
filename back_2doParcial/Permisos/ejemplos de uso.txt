@@ -1,0 +1,470 @@
+GUÍA DE USO DE ENDPOINTS - APP PERMISOS
+========================================
+
+BASE URL: http://localhost:8000/api/permisos/
+
+📋 NOTAS IMPORTANTES:
+- Todos los endpoints requieren autenticación JWT
+- Incluir token en headers: Authorization: Bearer <tu_token>
+- Para obtener token: POST /api/usuarios/login/
+- Los permisos controlan acceso a vistas específicas del sistema
+
+🔧 ESTRUCTURA DEL MODELO PERMISO:
+- usuario: ForeignKey a Usuario (obligatorio)
+- vista: Nombre de la vista/página (ej: "clientes", "empleados")
+- crear: Boolean (permite crear registros)
+- editar: Boolean (permite editar registros) 
+- eliminar: Boolean (permite eliminar registros)
+- ver: Boolean (permite ver registros, default=True)
+
+========================================================================
+1. LISTAR TODOS LOS PERMISOS
+========================================================================
+URL: GET /listar/
+Descripción: Obtiene todos los permisos del sistema
+
+Ejemplo:
+GET http://localhost:8000/api/permisos/listar/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta exitosa (200):
+[
+    {
+        "id": 1,
+        "usuario": 1,
+        "usuario_username": "admin",
+        "vista": "clientes",
+        "crear": true,
+        "editar": true,
+        "eliminar": true,
+        "ver": true
+    },
+    {
+        "id": 2,
+        "usuario": 1,
+        "usuario_username": "admin",
+        "vista": "empleados",
+        "crear": true,
+        "editar": true,
+        "eliminar": false,
+        "ver": true
+    },
+    {
+        "id": 3,
+        "usuario": 2,
+        "usuario_username": "vendedor1",
+        "vista": "clientes",
+        "crear": true,
+        "editar": true,
+        "eliminar": false,
+        "ver": true
+    }
+]
+
+========================================================================
+2. LISTAR PERMISOS POR USUARIO
+========================================================================
+URL: GET /usuario/{usuario_id}/
+Descripción: Obtiene todos los permisos de un usuario específico
+
+Ejemplo:
+GET http://localhost:8000/api/permisos/usuario/2/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta exitosa (200):
+[
+    {
+        "id": 3,
+        "usuario": 2,
+        "usuario_username": "vendedor1",
+        "vista": "clientes",
+        "crear": true,
+        "editar": true,
+        "eliminar": false,
+        "ver": true
+    },
+    {
+        "id": 4,
+        "usuario": 2,
+        "usuario_username": "vendedor1",
+        "vista": "productos",
+        "crear": false,
+        "editar": false,
+        "eliminar": false,
+        "ver": true
+    }
+]
+
+========================================================================
+3. OBTENER PERMISO ESPECÍFICO
+========================================================================
+URL: GET /{id}/
+Descripción: Obtiene un permiso específico por ID
+
+Ejemplo:
+GET http://localhost:8000/api/permisos/1/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta exitosa (200):
+{
+    "id": 1,
+    "usuario": 1,
+    "usuario_username": "admin",
+    "vista": "clientes",
+    "crear": true,
+    "editar": true,
+    "eliminar": true,
+    "ver": true
+}
+
+Respuesta error (404):
+{
+    "error": "Permiso no encontrado"
+}
+
+========================================================================
+4. CREAR PERMISO
+========================================================================
+URL: POST /crear/
+Descripción: Crea un nuevo permiso para un usuario
+
+Ejemplo de petición:
+POST http://localhost:8000/api/permisos/crear/
+Content-Type: application/json
+Authorization: Bearer tu_token_jwt_aqui
+
+{
+    "usuario": 2,
+    "vista": "reportes",
+    "crear": false,
+    "editar": false,
+    "eliminar": false,
+    "ver": true
+}
+
+Respuesta exitosa (201):
+{
+    "id": 5,
+    "usuario": 2,
+    "usuario_username": "vendedor1",
+    "vista": "reportes",
+    "crear": false,
+    "editar": false,
+    "eliminar": false,
+    "ver": true
+}
+
+Ejemplo de error (400) - datos inválidos:
+{
+    "usuario": ["Este campo es requerido."],
+    "vista": ["Este campo es requerido."]
+}
+
+========================================================================
+5. ACTUALIZAR PERMISO
+========================================================================
+URL: PUT /{id}/actualizar/
+Descripción: Actualiza un permiso existente (parcial o completo)
+
+Ejemplo:
+PUT http://localhost:8000/api/permisos/3/actualizar/
+Content-Type: application/json
+Authorization: Bearer tu_token_jwt_aqui
+
+Body (actualización parcial):
+{
+    "crear": true,
+    "editar": true,
+    "eliminar": true
+}
+
+Respuesta exitosa (200):
+{
+    "id": 3,
+    "usuario": 2,
+    "usuario_username": "vendedor1",
+    "vista": "clientes",
+    "crear": true,
+    "editar": true,
+    "eliminar": true,
+    "ver": true
+}
+
+========================================================================
+6. ELIMINAR PERMISO
+========================================================================
+URL: DELETE /{id}/eliminar/
+Descripción: Elimina permanentemente un permiso
+
+Ejemplo:
+DELETE http://localhost:8000/api/permisos/5/eliminar/
+Authorization: Bearer tu_token_jwt_aqui
+
+Respuesta exitosa (200):
+{
+    "message": "Permiso eliminado correctamente"
+}
+
+Respuesta error (404):
+{
+    "error": "Permiso no encontrado"
+}
+
+========================================================================
+EJEMPLOS PRÁCTICOS DE USO
+========================================================================
+
+📌 ESCENARIO 1: Configurar permisos para un nuevo vendedor
+
+1. Crear permisos para el módulo de clientes:
+POST /crear/
+{
+    "usuario": 3,
+    "vista": "clientes",
+    "crear": true,
+    "editar": true,
+    "eliminar": false,
+    "ver": true
+}
+
+2. Crear permisos para el módulo de productos:
+POST /crear/
+{
+    "usuario": 3,
+    "vista": "productos",
+    "crear": false,
+    "editar": false,
+    "eliminar": false,
+    "ver": true
+}
+
+3. Verificar permisos asignados:
+GET /usuario/3/
+
+📌 ESCENARIO 2: Actualizar permisos de usuario existente
+
+1. Obtener permisos actuales:
+GET /usuario/2/
+
+2. Actualizar permiso específico (dar acceso a eliminar):
+PUT /3/actualizar/
+{
+    "eliminar": true
+}
+
+📌 ESCENARIO 3: Revocar todos los permisos de un usuario
+
+1. Listar todos los permisos del usuario:
+GET /usuario/4/
+
+2. Eliminar cada permiso:
+DELETE /10/eliminar/
+DELETE /11/eliminar/
+DELETE /12/eliminar/
+
+========================================================================
+EJEMPLOS CON CÓDIGO
+========================================================================
+
+📌 Ejemplo con Python requests:
+
+import requests
+import json
+
+# Configuración
+BASE_URL = "http://localhost:8000/api/permisos"
+TOKEN = "tu_token_jwt_aqui"
+
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {TOKEN}"
+}
+
+# 1. Crear permiso para usuario
+def crear_permiso(usuario_id, vista, crear=False, editar=False, eliminar=False, ver=True):
+    url = f"{BASE_URL}/crear/"
+    datos = {
+        "usuario": usuario_id,
+        "vista": vista,
+        "crear": crear,
+        "editar": editar,
+        "eliminar": eliminar,
+        "ver": ver
+    }
+    
+    response = requests.post(url, json=datos, headers=headers)
+    
+    if response.status_code == 201:
+        print(f"✅ Permiso creado para vista '{vista}': {response.json()}")
+    else:
+        print(f"❌ Error creando permiso: {response.json()}")
+    
+    return response.json()
+
+# 2. Obtener permisos de usuario
+def obtener_permisos_usuario(usuario_id):
+    url = f"{BASE_URL}/usuario/{usuario_id}/"
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        permisos = response.json()
+        print(f"📋 Permisos del usuario {usuario_id}:")
+        for permiso in permisos:
+            print(f"  - {permiso['vista']}: C={permiso['crear']}, E={permiso['editar']}, D={permiso['eliminar']}, V={permiso['ver']}")
+        return permisos
+    else:
+        print("❌ Error:", response.json())
+        return []
+
+# 3. Actualizar permiso
+def actualizar_permiso(permiso_id, **kwargs):
+    url = f"{BASE_URL}/{permiso_id}/actualizar/"
+    response = requests.put(url, json=kwargs, headers=headers)
+    
+    if response.status_code == 200:
+        print(f"✅ Permiso {permiso_id} actualizado: {response.json()}")
+    else:
+        print(f"❌ Error actualizando permiso: {response.json()}")
+    
+    return response.json()
+
+# Ejemplos de uso
+if __name__ == "__main__":
+    # Crear permisos para un nuevo usuario
+    crear_permiso(usuario_id=5, vista="clientes", crear=True, editar=True, eliminar=False)
+    crear_permiso(usuario_id=5, vista="empleados", crear=False, editar=False, eliminar=False, ver=True)
+    
+    # Ver permisos del usuario
+    permisos = obtener_permisos_usuario(5)
+    
+    # Actualizar un permiso específico
+    if permisos:
+        primer_permiso = permisos[0]
+        actualizar_permiso(primer_permiso['id'], eliminar=True)
+
+📌 Ejemplo con JavaScript fetch:
+
+// Configuración
+const BASE_URL = 'http://localhost:8000/api/permisos';
+const TOKEN = 'tu_token_jwt_aqui';
+
+const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${TOKEN}`
+};
+
+// 1. Crear permiso
+const crearPermiso = async (usuarioId, vista, permisos = {}) => {
+    const url = `${BASE_URL}/crear/`;
+    const datos = {
+        usuario: usuarioId,
+        vista: vista,
+        crear: permisos.crear || false,
+        editar: permisos.editar || false,
+        eliminar: permisos.eliminar || false,
+        ver: permisos.ver !== undefined ? permisos.ver : true
+    };
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(datos)
+        });
+        
+        if (response.ok) {
+            const permiso = await response.json();
+            console.log('✅ Permiso creado:', permiso);
+            return permiso;
+        } else {
+            const error = await response.json();
+            console.error('❌ Error:', error);
+            return error;
+        }
+    } catch (error) {
+        console.error('❌ Error de conexión:', error);
+    }
+};
+
+// 2. Obtener permisos de usuario
+const obtenerPermisosUsuario = async (usuarioId) => {
+    const url = `${BASE_URL}/usuario/${usuarioId}/`;
+    
+    try {
+        const response = await fetch(url, { headers });
+        
+        if (response.ok) {
+            const permisos = await response.json();
+            console.log(`📋 Permisos del usuario ${usuarioId}:`, permisos);
+            return permisos;
+        } else {
+            console.error('❌ Error:', await response.json());
+            return [];
+        }
+    } catch (error) {
+        console.error('❌ Error de conexión:', error);
+        return [];
+    }
+};
+
+// 3. Verificar si usuario tiene permiso específico
+const tienePermiso = async (usuarioId, vista, accion) => {
+    const permisos = await obtenerPermisosUsuario(usuarioId);
+    const permisoVista = permisos.find(p => p.vista === vista);
+    
+    if (!permisoVista) return false;
+    
+    switch (accion) {
+        case 'crear': return permisoVista.crear;
+        case 'editar': return permisoVista.editar;
+        case 'eliminar': return permisoVista.eliminar;
+        case 'ver': return permisoVista.ver;
+        default: return false;
+    }
+};
+
+// Ejemplos de uso
+(async () => {
+    // Crear permisos para administrador
+    await crearPermiso(1, 'clientes', { crear: true, editar: true, eliminar: true });
+    await crearPermiso(1, 'empleados', { crear: true, editar: true, eliminar: true });
+    await crearPermiso(1, 'reportes', { crear: true, editar: false, eliminar: false });
+    
+    // Verificar permisos
+    const puedeEliminar = await tienePermiso(1, 'clientes', 'eliminar');
+    console.log('¿Puede eliminar clientes?', puedeEliminar);
+})();
+
+========================================================================
+💡 MEJORES PRÁCTICAS
+========================================================================
+
+1. **Nomenclatura de vistas**: Usar nombres consistentes (ej: "clientes", "empleados", "productos")
+2. **Permisos por defecto**: El campo 'ver' normalmente debería ser True
+3. **Validar existencia de usuario**: Asegurarse que el usuario existe antes de crear permisos
+4. **Evitar duplicados**: El unique_together en el modelo evita permisos duplicados por usuario-vista
+5. **Auditoría**: Mantener registro de cambios en permisos para trazabilidad
+
+🔐 EJEMPLOS DE CONFIGURACIÓN DE ROLES
+========================================================================
+
+👨‍💼 ADMINISTRADOR:
+- Todas las vistas: crear=true, editar=true, eliminar=true, ver=true
+
+👨‍💼 SUPERVISOR:
+- clientes: crear=true, editar=true, eliminar=false, ver=true
+- empleados: crear=false, editar=false, eliminar=false, ver=true  
+- reportes: crear=true, editar=false, eliminar=false, ver=true
+
+👨‍💼 VENDEDOR:
+- clientes: crear=true, editar=true, eliminar=false, ver=true
+- productos: crear=false, editar=false, eliminar=false, ver=true
+- empleados: crear=false, editar=false, eliminar=false, ver=false
+
+🛠️ POSIBLES MEJORAS FUTURAS
+========================================================================
+- Endpoint para crear múltiples permisos en una sola petición
+- Endpoint para copiar permisos de un usuario a otro
+- Filtros por vista en el listado general
+- Paginación en listados grandes
+- Historial de cambios en permisos

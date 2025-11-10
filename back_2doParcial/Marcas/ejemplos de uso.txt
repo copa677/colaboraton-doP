@@ -1,0 +1,27 @@
+
+crear marca:
+POST /api/marcas/crear/
+Content-Type: application/json
+
+{
+    "nombre": "Samsung"
+}
+listar marcas activa:
+GET /api/marcas/
+
+actualizar marca:
+PUT /api/marcas/1/actualizar/
+Content-Type: application/json
+
+{
+    "nombre": "Samsung Electronics"
+}
+
+buscar marcas:
+GET /api/marcas/buscar/?nombre=sams
+
+eliminacion logica:
+DELETE /api/marcas/1/eliminar/
+
+restaurar marca:
+POST /api/marcas/1/restaurar/

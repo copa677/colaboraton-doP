@@ -1,0 +1,427 @@
+GUÍA DE USO COMPLETA - APP PRODUCTOS
+=====================================
+
+BASE URL: http://localhost:8000/api/productos/
+
+📋 NOTAS GENERALES:
+- Todas las peticiones requieren autenticación JWT
+- Header: Authorization: Bearer <tu_token>
+- Para obtener token: POST /api/usuarios/login/
+
+========================================================================
+📦 PRODUCTOS PRINCIPALES
+========================================================================
+
+📋 LISTAR PRODUCTOS ACTIVOS
+GET /productos/
+Respuesta: [
+  {
+    "id": 1,
+    "descripcion": "Smartphone Galaxy S23",
+    "precio": "999.99",
+    "categoria": 1,
+    "nombre_categoria": "Electrónicos",
+    "marca": 1,
+    "nombre_marca": "Samsung",
+    "especificaciones": [...],
+    "urls": [...],
+    "estado": true,
+    "fecha_creacion": "2024-01-15T10:30:00Z",
+    "fecha_actualizacion": "2024-01-15T10:30:00Z"
+  }
+]
+
+📋 LISTAR TODOS LOS PRODUCTOS
+GET /productos/todos/
+Respuesta: [{...}] (incluye productos inactivos)
+
+➕ CREAR PRODUCTO
+POST /productos/crear/
+Body: {
+  "descripcion": "Laptop ThinkPad",
+  "precio": "1299.99",
+  "categoria_id": 1,
+  "marca_id": 2
+}
+Respuesta: {id, descripcion, precio, categoria, nombre_categoria, marca, nombre_marca, ...}
+
+🔍 OBTENER PRODUCTO ESPECÍFICO
+GET /productos/1/
+Respuesta: {id, descripcion, precio, categoria, nombre_categoria, marca, nombre_marca, especificaciones, urls, ...}
+
+✏️ ACTUALIZAR PRODUCTO
+PUT /productos/1/actualizar/
+Body: {
+  "descripcion": "Laptop ThinkPad X1",
+  "precio": "1399.99"
+}
+Respuesta: {id, descripcion, precio, ...}
+
+🗑️ ELIMINAR PRODUCTO (LÓGICA)
+DELETE /productos/1/eliminar/
+Respuesta: {"message": "Producto eliminado correctamente"}
+
+🔄 RESTAURAR PRODUCTO
+POST /productos/1/restaurar/
+Respuesta: {"message": "Producto restaurado", "producto": {...}}
+
+========================================================================
+🔍 BÚSQUEDAS Y FILTROS DE PRODUCTOS
+========================================================================
+
+🔍 BÚSQUEDA GENERAL
+GET /productos/buscar/?q=galaxy
+Respuesta: [{...}] (productos que coincidan en descripción, categoría o marca)
+
+📂 FILTRAR POR CATEGORÍA
+GET /productos/categoria/1/
+Respuesta: [{...}] (productos de la categoría 1)
+
+📂 FILTRAR POR MARCA
+GET /productos/marca/1/
+Respuesta: [{...}] (productos de la marca 1)
+
+📂 FILTRAR POR CATEGORÍA Y MARCA
+GET /productos/categoria/1/marca/1/
+Respuesta: [{...}] (productos de categoría 1 y marca 1)
+
+========================================================================
+📝 ESPECIFICACIONES DE PRODUCTOS
+========================================================================
+
+📋 LISTAR TODAS LAS ESPECIFICACIONES
+GET /especificaciones/
+Respuesta: [
+  {
+    "id": 1,
+    "nombre": "Pantalla",
+    "descripcion": "6.1 pulgadas OLED",
+    "producto": 1,
+    "producto_descripcion": "Smartphone Galaxy S23",
+    "estado": true
+  }
+]
+
+📋 LISTAR ESPECIFICACIONES DE UN PRODUCTO
+GET /especificaciones/producto/1/
+Respuesta: [{...}] (especificaciones del producto 1)
+
+➕ CREAR ESPECIFICACIÓN
+POST /especificaciones/crear/
+Body: {
+  "nombre": "Procesador",
+  "descripcion": "Snapdragon 8 Gen 2",
+  "producto_id": 1
+}
+Respuesta: {id, nombre, descripcion, producto, producto_descripcion, estado}
+
+✏️ ACTUALIZAR ESPECIFICACIÓN
+PUT /especificaciones/1/actualizar/
+Body: {
+  "descripcion": "Snapdragon 8 Gen 2, 3.36GHz"
+}
+Respuesta: {id, nombre, descripcion, ...}
+
+🗑️ ELIMINAR ESPECIFICACIÓN
+DELETE /especificaciones/1/eliminar/
+Respuesta: {"message": "Especificación eliminada correctamente"}
+
+🔄 RESTAURAR ESPECIFICACIÓN
+POST /especificaciones/1/restaurar/
+Respuesta: {"message": "Especificación restaurada", "especificacion": {...}}
+
+========================================================================
+🔗 URLs DE PRODUCTOS
+========================================================================
+
+📋 LISTAR TODAS LAS URLs
+GET /urls-productos/
+Respuesta: [
+  {
+    "id": 1,
+    "url": "https://samsung.com/galaxy-s23",
+    "producto": 1,
+    "producto_descripcion": "Smartphone Galaxy S23",
+    "estado": true,
+    "fecha_creacion": "2024-01-15T10:30:00Z"
+  }
+]
+
+📋 LISTAR URLs DE UN PRODUCTO
+GET /urls-productos/producto/1/
+Respuesta: [{...}] (URLs del producto 1)
+
+➕ CREAR URL DE PRODUCTO
+POST /urls-productos/crear/
+Body: {
+  "url": "https://amazon.com/samsung-galaxy-s23",
+  "producto_id": 1
+}
+Respuesta: {id, url, producto, producto_descripcion, estado, fecha_creacion}
+
+✏️ ACTUALIZAR URL DE PRODUCTO
+PUT /urls-productos/1/actualizar/
+Body: {
+  "url": "https://nueva-url.com/producto"
+}
+Respuesta: {id, url, ...}
+
+🗑️ ELIMINAR URL DE PRODUCTO
+DELETE /urls-productos/1/eliminar/
+Respuesta: {"message": "URL eliminada correctamente"}
+
+🔄 RESTAURAR URL DE PRODUCTO
+POST /urls-productos/1/restaurar/
+Respuesta: {"message": "URL restaurada", "url_producto": {...}}
+
+========================================================================
+📊 INVENTARIO DE PRODUCTOS
+========================================================================
+
+📋 LISTAR TODO EL INVENTARIO
+GET /inventario/
+Respuesta: [
+  {
+    "id": 1,
+    "cantidad": 50,
+    "ubicacion": "Almacén A, Estante 3",
+    "producto": 1,
+    "producto_descripcion": "Smartphone Galaxy S23",
+    "estado": true,
+    "fecha_actualizacion": "2024-01-15T10:30:00Z"
+  }
+]
+
+🔍 OBTENER INVENTARIO DE UN PRODUCTO
+GET /inventario/producto/1/
+Respuesta: {id, cantidad, ubicacion, producto, producto_descripcion, ...}
+
+➕ CREAR INVENTARIO
+POST /inventario/crear/
+Body: {
+  "cantidad": 25,
+  "ubicacion": "Bodega Principal",
+  "producto_id": 1
+}
+Respuesta: {id, cantidad, ubicacion, producto, producto_descripcion, ...}
+
+✏️ ACTUALIZAR INVENTARIO
+PUT /inventario/1/actualizar/
+Body: {
+  "cantidad": 30,
+  "ubicacion": "Almacén B, Estante 5"
+}
+Respuesta: {id, cantidad, ubicacion, ...}
+
+🗑️ ELIMINAR INVENTARIO
+DELETE /inventario/1/eliminar/
+Respuesta: {"message": "Inventario eliminado correctamente"}
+
+🔄 RESTAURAR INVENTARIO
+POST /inventario/1/restaurar/
+Respuesta: {"message": "Inventario restaurado", "inventario": {...}}
+
+========================================================================
+💡 EJEMPLOS PRÁCTICOS DE USO
+========================================================================
+
+📌 ESCENARIO 1: Crear producto completo con especificaciones, URLs e inventario
+
+1. Crear producto principal:
+POST /productos/crear/
+{
+  "descripcion": "iPhone 15 Pro",
+  "precio": "1199.99",
+  "categoria_id": 1,
+  "marca_id": 3
+}
+
+2. Agregar especificaciones:
+POST /especificaciones/crear/
+{
+  "nombre": "Pantalla",
+  "descripcion": "6.1 pulgadas Super Retina XDR",
+  "producto_id": 2
+}
+
+POST /especificaciones/crear/
+{
+  "nombre": "Cámara",
+  "descripcion": "Triple cámara 48MP + 12MP + 12MP",
+  "producto_id": 2
+}
+
+3. Agregar URLs:
+POST /urls-productos/crear/
+{
+  "url": "https://apple.com/iphone-15-pro",
+  "producto_id": 2
+}
+
+4. Crear inventario:
+POST /inventario/crear/
+{
+  "cantidad": 15,
+  "ubicacion": "Almacén Premium",
+  "producto_id": 2
+}
+
+5. Ver producto completo:
+GET /productos/2/
+
+📌 ESCENARIO 2: Actualizar stock y agregar nueva URL
+
+1. Ver inventario actual:
+GET /inventario/producto/2/
+
+2. Actualizar cantidad:
+PUT /inventario/1/actualizar/
+{
+  "cantidad": 20
+}
+
+3. Agregar nueva URL:
+POST /urls-productos/crear/
+{
+  "url": "https://amazon.com/iphone-15-pro",
+  "producto_id": 2
+}
+
+📌 ESCENARIO 3: Búsqueda y filtros
+
+1. Buscar todos los iPhones:
+GET /productos/buscar/?q=iphone
+
+2. Filtrar por categoría "Electrónicos":
+GET /productos/categoria/1/
+
+3. Filtrar por marca "Apple":
+GET /productos/marca/3/
+
+4. Combinar filtros:
+GET /productos/categoria/1/marca/3/
+
+========================================================================
+🛠️ EJEMPLOS CON CÓDIGO
+========================================================================
+
+📌 Python requests - Crear producto completo:
+
+import requests
+
+BASE_URL = "http://localhost:8000/api/productos"
+TOKEN = "tu_token_jwt"
+
+headers = {"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"}
+
+# 1. Crear producto
+producto_data = {
+    "descripcion": "Monitor 4K Samsung",
+    "precio": "399.99",
+    "categoria_id": 1,
+    "marca_id": 1
+}
+producto_resp = requests.post(f"{BASE_URL}/productos/crear/", json=producto_data, headers=headers)
+producto = producto_resp.json()
+producto_id = producto['id']
+
+# 2. Agregar especificaciones
+espec_data = {
+    "nombre": "Resolución",
+    "descripcion": "3840 x 2160 pixels 4K UHD",
+    "producto_id": producto_id
+}
+requests.post(f"{BASE_URL}/especificaciones/crear/", json=espec_data, headers=headers)
+
+# 3. Agregar URL
+url_data = {
+    "url": "https://samsung.com/monitor-4k",
+    "producto_id": producto_id
+}
+requests.post(f"{BASE_URL}/urls-productos/crear/", json=url_data, headers=headers)
+
+# 4. Crear inventario
+inventario_data = {
+    "cantidad": 8,
+    "ubicacion": "Almacén Tecnología",
+    "producto_id": producto_id
+}
+requests.post(f"{BASE_URL}/inventario/crear/", json=inventario_data, headers=headers)
+
+print(f"✅ Producto {producto_id} creado exitosamente")
+
+📌 JavaScript fetch - Obtener producto con detalles:
+
+async function obtenerProductoCompleto(productoId) {
+    const BASE_URL = 'http://localhost:8000/api/productos';
+    const token = 'tu_token_jwt';
+    
+    const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+    
+    try {
+        // Obtener producto principal
+        const productoResponse = await fetch(`${BASE_URL}/productos/${productoId}/`, { headers });
+        const producto = await productoResponse.json();
+        
+        // Obtener inventario
+        const inventarioResponse = await fetch(`${BASE_URL}/inventario/producto/${productoId}/`, { headers });
+        const inventario = await inventarioResponse.json();
+        
+        console.log('📦 Producto:', producto);
+        console.log('📊 Inventario:', inventario);
+        
+        return { producto, inventario };
+    } catch (error) {
+        console.error('❌ Error:', error);
+    }
+}
+
+// Usar la función
+obtenerProductoCompleto(1);
+
+========================================================================
+🚨 CÓDIGOS DE ERROR COMUNES
+========================================================================
+
+400 - Bad Request:
+- "Ya existe un producto activo con esta descripción, categoría y marca"
+- "Categoría no encontrada o inactiva"
+- "Marca no encontrada o inactiva"
+- "Producto no encontrado o inactivo"
+- "Ya existe una URL activa con este enlace"
+- "Ya existe un inventario activo para este producto"
+
+404 - Not Found:
+- "Producto no encontrado o inactivo"
+- "Especificación no encontrada"
+- "URL no encontrada"
+- "Inventario no encontrado"
+
+401 - Unauthorized:
+- Token inválido o faltante
+
+========================================================================
+💡 MEJORES PRÁCTICAS
+========================================================================
+
+1. ✅ Siempre validar que categorías y marcas existan antes de crear productos
+2. ✅ Usar búsquedas antes de crear para evitar duplicados
+3. ✅ Mantener URLs únicas por producto
+4. ✅ Actualizar inventario cuando hay movimientos de stock
+5. ✅ Usar eliminación lógica en lugar de eliminación física
+6. ✅ Incluir el token JWT en todas las peticiones
+7. ✅ Verificar respuestas HTTP antes de procesar datos
+
+========================================================================
+🎯 FLUJO RECOMENDADO PARA NUEVO PRODUCTO
+========================================================================
+
+1. GET /productos/buscar/?q=nombre_producto (verificar si existe)
+2. POST /productos/crear/ (crear producto principal)
+3. POST /especificaciones/crear/ (agregar características)
+4. POST /urls-productos/crear/ (agregar enlaces)
+5. POST /inventario/crear/ (establecer stock inicial)
+6. GET /productos/{id}/ (verificar creación completa)
