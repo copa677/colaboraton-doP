@@ -10,4 +10,6 @@ urlpatterns = [
     path('<int:pk>/actualizar/', views.actualizar_cliente, name='actualizar-cliente'),
     path('<int:pk>/eliminar/', views.eliminar_cliente, name='eliminar-cliente'),
     path('<int:pk>/restaurar/', views.restaurar_cliente, name='restaurar-cliente'),
+    path('buscar/ci/', views.buscar_cliente_por_ci, name='buscar-cliente-ci'),
+    path('buscar/telefono/', views.buscar_cliente_por_telefono, name='buscar-cliente-telefono'),
 ]

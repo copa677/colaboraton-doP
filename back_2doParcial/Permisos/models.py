@@ -7,7 +7,7 @@ class Permiso(models.Model):
     eliminar = models.BooleanField(default=False)
     ver = models.BooleanField(default=True)
     vista = models.CharField(max_length=50)
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='permisos')
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='permisos',null=False)
 
     class Meta:
         db_table = 'permisos'

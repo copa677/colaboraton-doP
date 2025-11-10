@@ -1,0 +1,28 @@
+
+ crear una categoria
+POST /api/categorias/crear/
+Content-Type: application/json
+
+{
+    "descripcion": "Electrónicos"
+}
+
+lsiatr categorias activas
+GET /api/categorias/
+
+actualizar categoria
+PUT /api/categorias/1/actualizar/
+Content-Type: application/json
+
+{
+    "descripcion": "Electrodomésticos"
+}
+
+buscar categorias
+GET /api/categorias/buscar/?descripcion=elec
+
+eliminar categoira
+DELETE /api/categorias/1/eliminar/
+
+restaurar categoria
+POST /api/categorias/1/restaurar/
