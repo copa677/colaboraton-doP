@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API = import.meta.env.VITE_API_BASE_URL
+const API = import.meta.env.VITE_API_BASE_URL;
 
 export interface Permiso {
   id?: number

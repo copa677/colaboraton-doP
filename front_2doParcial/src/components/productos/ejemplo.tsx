@@ -66,7 +66,7 @@ interface NuevaEspecificacionState {
 }
 
 // Modal Component
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal2({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   if (!isOpen) return null;
 
   const sizeClasses: Record<string, string> = {
