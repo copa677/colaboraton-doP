@@ -9,6 +9,7 @@ def generate_token(user):
     payload = {
         'id': user.id,
         'username': user.username,
+        'tipo_usuario': user.tipo_usuario,
         'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=settings.JWT_EXP_DELTA_HOURS),
         'iat': datetime.datetime.utcnow()
     }

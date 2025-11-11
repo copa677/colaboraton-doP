@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = import.meta.env.VITE_API_BASE_URL;
+const API = import.meta.env.VITE_API_BASE_URL + '/productos';
 
 export interface Inventario {
   id?: number;
@@ -21,6 +21,7 @@ export interface CreateInventarioData {
 export interface UpdateInventarioData {
   cantidad?: number;
   ubicacion?: string;
+  estado?: boolean;
 }
 
 // 📋 Obtener todos los inventarios activos
@@ -57,13 +58,4 @@ export async function eliminarInventario(id: number): Promise<{message: string}>
 export async function restaurarInventario(id: number): Promise<{message: string, inventario: Inventario}> {
   const response = await axios.post(`${API}/inventario/${id}/restaurar/`);
   return response.data;
-}
-
-// 📊 Actualizar stock de un producto
-export async function actualizarStock(productoId: number, cantidad: number): Promise<Inventario> {
-  // Primero obtenemos el inventario existente
-  const inventario = await getInventarioByProducto(productoId);
-  
-  // Actualizamos la cantidad
-  return actualizarInventario(inventario.id!, { cantidad });
 }

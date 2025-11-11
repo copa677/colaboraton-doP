@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Users, Briefcase, UserCheck, BookOpen, Shield, 
-  Menu, X, Zap, LogOut, ChevronRight , Tags, Building2, Package
+import {
+  Users, Briefcase, UserCheck, BookOpen, Shield, Boxes,
+  Menu, X, Zap, LogOut, ChevronRight, Tags, Building2, Package
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext'; 
+import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function Home() {
@@ -22,17 +22,18 @@ export default function Home() {
     { path: '/home/categorias', label: 'Categorias', icon: Tags },
     { path: '/home/marcas', label: 'Marcas', icon: Building2 },
     { path: '/home/productos', label: 'Productos', icon: Package },
+    { path: '/home/inventario', label: 'Inventario', icon: Boxes },
   ];
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    
+
     try {
       // Simular un pequeño delay para mejor UX
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       logout();
-      
+
       // Mostrar toast de éxito
       toast.success('Sesión cerrada exitosamente', {
         duration: 3000,
@@ -43,15 +44,14 @@ export default function Home() {
           color: 'white',
         },
       });
-      
-      // Redirigir al login después de un breve delay
+
       setTimeout(() => {
-        navigate('/login');
+        navigate('/');
       }, 1000);
-      
+
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      
+
       // Mostrar toast de error
       toast.error('Error al cerrar sesión. Intenta nuevamente.', {
         duration: 4000,
@@ -78,9 +78,10 @@ export default function Home() {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-blue-600 to-indigo-700 text-white transition-all duration-300 ease-in-out flex flex-col`}>
-        {/* Logo */}
-        <div className="p-6 flex items-center justify-between border-b border-blue-500">
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-blue-600 to-indigo-700 text-white transition-all duration-300 ease-in-out flex flex-col h-full fixed left-0 top-0 bottom-0`}>
+
+        {/* Logo - parte superior fija */}
+        <div className="p-6 flex items-center justify-between border-b border-blue-500 flex-shrink-0">
           {sidebarOpen && (
             <div className="flex items-center gap-3">
               <div className="bg-white rounded-lg p-2">
@@ -97,8 +98,8 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Menu */}
-        <nav className="flex-1 py-6 px-3">
+        {/* Menú - área con scroll */}
+        <nav className="flex-1 overflow-y-auto py-6 px-3">
           <ul className="space-y-2">
             {menuItems.map(({ path, label, icon: Icon }) => {
               const active = location.pathname === path;
@@ -106,11 +107,10 @@ export default function Home() {
                 <li key={path}>
                   <Link
                     to={path}
-                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      active
+                    className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 ${active
                         ? 'bg-white text-blue-600 shadow-lg'
                         : 'text-blue-100 hover:bg-blue-500 hover:text-white'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     {sidebarOpen && (
@@ -126,16 +126,15 @@ export default function Home() {
           </ul>
         </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-blue-500">
-          <button 
+        {/* Logout - parte inferior fija */}
+        <div className="p-4 border-t border-blue-500 flex-shrink-0">
+          <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              isLoggingOut 
-                ? 'opacity-50 cursor-not-allowed' 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isLoggingOut
+                ? 'opacity-50 cursor-not-allowed'
                 : 'text-blue-100 hover:bg-blue-500 hover:text-white'
-            }`}
+              }`}
           >
             {isLoggingOut ? (
               <div className="w-5 h-5 border-2 border-blue-100 border-t-transparent rounded-full animate-spin" />
@@ -152,7 +151,7 @@ export default function Home() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className={`flex-1 overflow-y-auto ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-8 py-6 flex items-center justify-between">
             <div>

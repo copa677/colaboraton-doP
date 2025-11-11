@@ -8,7 +8,7 @@ import ProductGrid from "../../components/product-grid";
 import Footer from "../../components/footer";
 import Cart from "../../components/cart";
 
-export default function Home() {
+export default function HomeCliente() {
   const [cartOpen, setCartOpen] = useState(false)
   const [cartItems, setCartItems] = useState<
     Array<{ id: number; name: string; price: number; quantity: number; image: string }>

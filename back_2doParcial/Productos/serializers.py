@@ -117,17 +117,33 @@ class InventarioCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("Producto no encontrado o inactivo")
 
     def validate(self, data):
-        producto = data.get('producto_id')
-        if Inventario.objects.filter(producto=producto, estado=True).exists():
-            raise serializers.ValidationError("Ya existe un inventario activo para este producto")
+        # No validar existencia, permitir crear o actualizar
         return data
 
     def create(self, validated_data):
-        return Inventario.objects.create(
-            cantidad=validated_data['cantidad'],
-            ubicacion=validated_data['ubicacion'],
-            producto=validated_data['producto_id']
-        )
+        producto = validated_data['producto_id']
+        cantidad = validated_data['cantidad']
+        ubicacion = validated_data['ubicacion']
+        
+        # Verificar si ya existe inventario para este producto
+        try:
+            inventario_existente = Inventario.objects.get(
+                producto=producto, 
+                estado=True
+            )
+            # Si existe, actualizar la cantidad sumando
+            inventario_existente.cantidad += cantidad
+            inventario_existente.ubicacion = ubicacion  # Opcional: actualizar ubicación
+            inventario_existente.save()
+            return inventario_existente
+            
+        except Inventario.DoesNotExist:
+            # Si no existe, crear nuevo
+            return Inventario.objects.create(
+                cantidad=cantidad,
+                ubicacion=ubicacion,
+                producto=producto
+            )
 
 # Serializers para Producto 
 class ProductoSerializer(serializers.ModelSerializer):
