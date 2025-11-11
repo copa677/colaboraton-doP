@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom'
 export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const { isAuthenticated, user, logout } = useAuth()
+  const { isAuthenticated, user, logout, isCliente } = useAuth()
   const navigate = useNavigate()
 
   // Cerrar dropdown al hacer click fuera
@@ -33,7 +33,7 @@ export default function UserMenu() {
     // El logout ya redirige a '/' automáticamente
   }
 
-  
+
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -65,9 +65,14 @@ export default function UserMenu() {
                   <p className="text-xs text-primary font-medium capitalize mt-1">
                     {user?.tipo_usuario}
                   </p>
+                  {isCliente && (
+                    <p className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded mt-1">
+                      Cliente Activo
+                    </p>
+                  )}
                 </div>
 
-                
+
 
                 {/* Opciones del usuario */}
                 <a

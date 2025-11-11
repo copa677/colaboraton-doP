@@ -17,6 +17,9 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   userType: string | null;
+  // NUEVAS PROPIEDADES
+  isCliente: boolean;
+  isEmpleado: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,6 +30,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [userType, setUserType] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+
+  // Calcular si es cliente o empleado (basado en el usuario actual)
+  const isCliente = user?.tipo_usuario === 'cliente';
+  const isEmpleado = user?.tipo_usuario === 'empleado';
 
   // Verificar autenticación al cargar la app
   useEffect(() => {
@@ -67,9 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (response.user.tipo_usuario === 'empleado') {
         navigate('/home'); // Panel administrativo
       } else {
-        // Si es cliente, se queda en la página actual (home-cliente)
-        // O puedes redirigir a una página específica para clientes
-        navigate('/'); // Se queda en el home público
+        navigate('/'); // Home público para clientes
       }
       
       return true;
@@ -92,7 +97,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout, loading, userType }}>
+    <AuthContext.Provider value={{ 
+      isAuthenticated, 
+      user, 
+      login, 
+      logout, 
+      loading, 
+      userType,
+      // NUEVAS PROPIEDADES
+      isCliente,
+      isEmpleado
+    }}>
       {children}
     </AuthContext.Provider>
   );

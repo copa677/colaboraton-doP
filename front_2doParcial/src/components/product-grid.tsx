@@ -1,7 +1,10 @@
+// components/product-grid.tsx - MODIFICADO
 import { useState, useEffect } from 'react';
-import { Star, ShoppingCart, Eye } from 'lucide-react';
-import { listarProductos, type Producto } from '.././services/productos.service';
-import { type ImagenProducto } from '.././services/imagenesProductos.service';
+import { Star, ShoppingCart, Eye, LogIn } from 'lucide-react';
+import { listarProductos, type Producto } from '../services/productos.service';
+import { type ImagenProducto } from '../services/imagenesProductos.service';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 interface ProductGridProps {
   onAddToCart: (product: {
@@ -16,6 +19,9 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
   const [products, setProducts] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addingToCart, setAddingToCart] = useState<number | null>(null);
+
+  const { isAuthenticated, user, isCliente, login } = useAuth();
 
   // Cargar productos al montar el componente
   useEffect(() => {
@@ -23,6 +29,8 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
       try {
         setLoading(true);
         const productosData = await listarProductos();
+        console.log('Productos cargados:', productosData); // ← VER QUÉ VIENE DEL BACKEND
+      console.log('Primer producto imágenes:', productosData[0]?.imagenes); // ← VER IMÁGENES
         setProducts(productosData);
       } catch (err) {
         console.error('Error al cargar productos:', err);
@@ -37,8 +45,25 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
 
   // Obtener la imagen principal de un producto
   const getImagenPrincipal = (imagenes: ImagenProducto[]): string => {
-    const imagenPrincipal = imagenes.find(img => img.es_principal);
-    return imagenPrincipal?.imagen_url || '/placeholder-product.jpg';
+    if (!imagenes || !Array.isArray(imagenes) || imagenes.length === 0) {
+      return '/placeholder-product.jpg';
+    }
+
+    // Buscar imagen principal activa
+    const imagenPrincipal = imagenes.find(img => img.es_principal && img.estado !== false);
+    if (imagenPrincipal?.imagen_url) {
+      return imagenPrincipal.imagen_url;
+    }
+
+    // Si no hay principal, tomar la primera imagen activa
+    const primeraImagenActiva = imagenes.find(img => img.estado !== false);
+    if (primeraImagenActiva?.imagen_url) {
+      return primeraImagenActiva.imagen_url;
+    }
+
+    // Si no hay imágenes activas, tomar cualquier imagen
+    const cualquierImagen = imagenes[0]?.imagen_url;
+    return cualquierImagen || '/placeholder-product.jpg';
   };
 
   // Formatear precio
@@ -49,14 +74,59 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
     })}`;
   };
 
-  // Manejar agregar al carrito
-  const handleAddToCart = (product: Producto) => {
-    onAddToCart({
-      id: product.id,
-      name: product.descripcion,
-      price: parseFloat(product.precio),
-      image: getImagenPrincipal(product.imagenes)
-    });
+  // Manejar agregar al carrito - CON AUTENTICACIÓN
+  const handleAddToCart = async (product: Producto) => {
+    // Verificar si el usuario está autenticado y es cliente
+    if (!isAuthenticated || !isCliente) {
+      toast.error('Debes iniciar sesión como cliente para agregar productos al carrito', {
+        duration: 4000,
+        position: 'top-right'
+      });
+      return;
+    }
+
+    // Verificar stock
+    if (!product.inventario || product.inventario.cantidad === 0) {
+      toast.error('Producto sin stock disponible', {
+        duration: 3000,
+        position: 'top-right'
+      });
+      return;
+    }
+
+    try {
+      setAddingToCart(product.id);
+
+      // Actualizar el carrito local
+      const imagenPrincipal = getImagenPrincipal(product.imagenes);
+      onAddToCart({
+        id: product.id,
+        name: product.descripcion,
+        price: parseFloat(product.precio),
+        image: imagenPrincipal
+      });
+
+      toast.success('Producto agregado al carrito', {
+        duration: 3000,
+        position: 'top-right'
+      });
+
+    } catch (error: any) {
+      console.error('Error al agregar al carrito:', error);
+      const errorMessage = error.response?.data?.error || 'Error al agregar producto al carrito';
+      toast.error(errorMessage, {
+        duration: 4000,
+        position: 'top-right'
+      });
+    } finally {
+      setAddingToCart(null);
+    }
+  };
+
+  // Botón para redirigir al login
+  const handleLoginRedirect = () => {
+    // Puedes usar tu sistema de routing aquí
+    window.location.href = '/login';
   };
 
   if (loading) {
@@ -79,37 +149,7 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
     );
   }
 
-  if (error) {
-    return (
-      <section className="py-12 sm:py-16 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">Productos Destacados</h2>
-          <div className="bg-destructive/10 border border-destructive rounded-lg p-6">
-            <p className="text-destructive">{error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition"
-            >
-              Reintentar
-            </button>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <section className="py-12 sm:py-16 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">Productos Destacados</h2>
-          <div className="bg-muted rounded-lg p-8">
-            <p className="text-muted-foreground text-lg">No hay productos disponibles en este momento.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // ... resto del código del ProductGrid se mantiene igual hasta el botón ...
 
   return (
     <section className="py-12 sm:py-16 bg-background">
@@ -120,6 +160,15 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
             <span className="text-sm text-muted-foreground">
               {products.length} producto{products.length !== 1 ? 's' : ''} encontrado{products.length !== 1 ? 's' : ''}
             </span>
+            {!isAuthenticated && (
+              <button
+                onClick={handleLoginRedirect}
+                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-semibold hover:bg-primary/90 transition flex items-center gap-2"
+              >
+                <LogIn size={16} />
+                Iniciar Sesión
+              </button>
+            )}
           </div>
         </div>
 
@@ -162,7 +211,7 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
                   {product.descripcion}
                 </h3>
 
-                {/* Rating (placeholder) */}
+                {/* Rating */}
                 <div className="flex items-center gap-1 mb-2">
                   <div className="flex text-yellow-400">
                     {[...Array(5)].map((_, i) => (
@@ -192,15 +241,46 @@ export default function ProductGrid({ onAddToCart }: ProductGridProps) {
                   )}
                 </div>
 
-                {/* Botón agregar al carrito */}
-                <button
-                  onClick={() => handleAddToCart(product)}
-                  disabled={!product.inventario || product.inventario.cantidad === 0}
-                  className="w-full bg-primary text-primary-foreground py-2 rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
-                >
-                  <ShoppingCart size={16} />
-                  Agregar al Carrito
-                </button>
+                {/* Botón agregar al carrito - MODIFICADO */}
+                {!isAuthenticated ? (
+                  <button
+                    onClick={handleLoginRedirect}
+                    className="w-full bg-gray-500 text-white py-2 rounded-lg font-semibold hover:bg-gray-600 transition flex items-center justify-center gap-2"
+                  >
+                    <LogIn size={16} />
+                    Iniciar Sesión para Comprar
+                  </button>
+                ) : !isCliente ? (
+                  <button
+                    disabled
+                    className="w-full bg-gray-400 text-white py-2 rounded-lg font-semibold cursor-not-allowed transition flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart size={16} />
+                    Solo para Clientes
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleAddToCart(product)}
+                    disabled={
+                      addingToCart === product.id ||
+                      !product.inventario ||
+                      product.inventario.cantidad === 0
+                    }
+                    className="w-full bg-primary text-primary-foreground py-2 rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
+                  >
+                    {addingToCart === product.id ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Agregando...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={16} />
+                        Agregar al Carrito
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           ))}
